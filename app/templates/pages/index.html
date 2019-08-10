@@ -1,4 +1,83 @@
 {% extends 'layouts/index.html' %}
 {% block body %}
-  HOME
+  <div class="row m-0">
+    <div class="col-2"></div>
+    <div class="col-8">
+      <!-- Cadastro Aluno: -->
+      <div class="jumbotron py-4 shadow">
+        <form class="form" method="POST">
+          <div class="input-group mb-2">
+            <input class="form-control" name="id-aluno" type="text" placeholder="ID" />
+            <!-- Listagem turmas: -->
+            <select name="turma-aluno" class="form-control">
+            </select>
+          </div>
+          <button 
+            type="submit" 
+            name="cadastro-aluno" 
+            class="btn btn-primary btn-block"
+          >
+            Cadastrar Aluno
+          </button>
+        </form>
+      </div>
+      <div class="row">
+        <!-- Cadastro Turma: -->
+        <div class="col-12">
+          <div class="jumbotron py-4 shadow">
+            <form class="form" method="POST">
+              <div class="input-group mb-2">
+                <input 
+                  class="form-control" 
+                  name="nome-turma" 
+                  type="text" 
+                  placeholder="Nome..." 
+                />
+              </div>
+              <button type="submit" class="btn btn-primary btn-block">Cadastrar Turma</button>
+            </form>
+          </div>
+        </div>
+      </div>
+      <div class="jumbotron py-4 shadow">
+        <!-- Listagem turmas: -->
+        <div class="my-2 card-body rounded text-light bg-info">
+          <form 
+            class="d-flex justify-content-between align-items-center" 
+            action="./turma.php" 
+            method="get"
+          >
+            <input type="hidden" name="turma" value="<?= $turma['id'] ?>">
+            <input type="hidden" name="nomeTurma" value="<?= $turma['nome'] ?>">
+            <strong>TURMA</strong>
+            <button class="btn btn-primary" type="submit">Ver Alunos</button>
+          </form>
+        </div>
+      </div>
+      <div class="jumbotron py-4 shadow">
+        <!-- Listagem instituições: -->
+        <div class="my-2 card-body rounded text-light bg-info">
+          <form 
+            class="d-flex justify-content-between align-items-center" 
+            action="./instituicao.php" 
+            method="get"
+          >
+            <input type="hidden" name="instituicao" value="<?= $instituicao['id'] ?>">
+            <input type="hidden" name="instituicaoNome" value="<?= $instituicao['nome'] ?>">
+            <strong>INSTITUICAO</strong>
+            <button class="btn btn-primary" type="submit">Ver Alunos</button>
+          </form>
+        </div>
+      </div>
+      <div class="jumbotron py-4 shadow">
+        <!-- Plotagem gráfico -->
+        <h2 class="text-primary text-center mb-3" style="font-size:35px">
+          <strong>Média de Pontuação das Instituições</strong>
+        </h2>
+        <div class="row my-2 card-body rounded text-light bg-info">
+        </div>
+      </div>
+    </div>
+    <div class="col-2"></div>
+  </div>
 {% endblock %}
