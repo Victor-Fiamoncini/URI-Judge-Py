@@ -1,15 +1,10 @@
 {% extends 'layouts/index.html' %}
 {% block body %}
-
-  {{ response }}
-<!-- 
-  {% for resp in response %}
-    {{ resp }}
-  {% endfor %} -->
-
   <div class="row m-0">
     <div class="col-2"></div>
     <div class="col-8">
+      <!-- Messages: -->
+      {% include 'includes/_messages.html' %}
       <!-- Cadastro Aluno: -->
       <div class="jumbotron py-4 shadow">
         <form class="form" method="POST">
@@ -33,16 +28,22 @@
         <!-- Cadastro Turma: -->
         <div class="col-12">
           <div class="jumbotron py-4 shadow">
-            <form class="form" method="POST">
+            <form 
+              class="form" 
+              method="POST"
+              action="/cadastro-turma"
+            >
               <div class="input-group mb-2">
                 <input 
                   class="form-control" 
-                  name="nome-turma" 
+                  name="name-turma" 
                   type="text" 
                   placeholder="Nome..." 
                 />
               </div>
-              <button type="submit" class="btn btn-primary btn-block">Cadastrar Turma</button>
+              <button type="submit" class="btn btn-primary btn-block">
+                Cadastrar Turma
+              </button>
             </form>
           </div>
         </div>

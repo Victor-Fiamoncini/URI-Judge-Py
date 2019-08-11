@@ -1,15 +1,13 @@
-# -*- coding: utf-8 -*-
 # Imports:
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
-import os
-import requests
-import json
 from urllib.request import Request, urlopen
+import os
 
 # App:
 app = Flask(__name__)
+app.secret_key = 'mytopmegafuckingsecret'
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 # Database Configs:
@@ -138,13 +136,39 @@ def index():
   })
   res = urlopen(req).read()
   res = ''.join(map(chr, res))
+  res = res.find('pb-information')
   return render_template('pages/index.html', response=res)
+
+# Cadastro turma:
+@app.route('/cadastro-turma', methods=['POST'])
+def cadastroTurma(): 
+  name = request.form['name-turma']
+  new_turma = Turma(name)
+  db.session.add(new_turma)
+  db.session.commit()
+  flash('Turma cadastrada com sucesso', 'success')
+  return render_template('pages/index.html')
+
+# Cadastro Aluno:
+@app.route('/cadastro-aluno', methods=['POST'])
+def cadastroAluno(): 
+  id = request.form['id-aluno']
+  
+  
+  new_aluno = Aluno(name)
+  db.session.add(new_aluno)
+  db.session.commit()
+  flash('Aluno cadastrada com sucesso', 'success')
+  return render_template('pages/index.html')
+
+
 
 # Server:
 if __name__ == '__main__':
   app.run(
+    host='localhost',
     debug=True,
-    port=5000
+    port=5000,
   )
 
 # Create database (CLI):
