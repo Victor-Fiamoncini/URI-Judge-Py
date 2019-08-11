@@ -1,3 +1,8 @@
+body {
+  background: #eee;
+}
+
+
 ::-webkit-scrollbar {
   width: 14px;
 }

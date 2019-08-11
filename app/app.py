@@ -1,8 +1,12 @@
+# -*- coding: utf-8 -*-
 # Imports:
 from flask import Flask, request, jsonify, render_template
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 import os
+import requests
+import json
+from urllib.request import Request, urlopen
 
 # App:
 app = Flask(__name__)
@@ -18,25 +22,33 @@ ma = Marshmallow(app)
 class Turma(db.Model):
   id = db.Column(db.Integer, primary_key=True, autoincrement=True)
   name = db.Column(db.String(255))
+
   def __init__(self, name):
     self.name = name
 
 # Turma Schema:
 class TurmaSchema(ma.Schema):
   class Meta:
-    fields = ('id', 'name')
+    fields = (
+      'id', 
+      'name'
+    )
 
 # Instituicao Class/Model:
 class Instituicao(db.Model):
   id = db.Column(db.Integer, primary_key=True, autoincrement=True)
   name = db.Column(db.String(255))
+
   def __init__(self, name):
     self.name = name
 
 # Instituicao Schema:
 class InstituicaoSchema(ma.Schema):
   class Meta:
-    fields = ('id', 'name')
+    fields = (
+      'id', 
+      'name'
+    )
 
 # Aluno Class/Model:
 class Aluno(db.Model):
@@ -89,6 +101,7 @@ class AlunoTurma(db.Model):
     db.Integer, 
     db.ForeignKey('turma.id'), nullable=False
   )
+
   def __init__(self, aluno_id, turma_id):
     self.aluno_id = aluno_id
     self.turma_id = turma_id
@@ -96,7 +109,11 @@ class AlunoTurma(db.Model):
 # AlunoTurma Schema:
 class AlunoTurmaSchema(ma.Schema):
   class Meta:
-    fields = ('id', 'aluno_id', 'turma_id')
+    fields = (
+      'id', 
+      'aluno_id', 
+      'turma_id'
+    )
 
 # Init schemas:
 # Turma:
@@ -113,13 +130,22 @@ aluno_turma_schema = AlunoTurmaSchema(strict=True)
 aluno_turmas_schema = AlunoTurmaSchema(many=True, strict=True)
 
 # Routes:
-@app.route('/', methods=['GET'])
+# Index page:
+@app.route('/', methods=['GET', 'POST'])
 def index():  
-  return render_template('pages/index.html')
+  req = Request('https://www.urionlinejudge.com.br/judge/en/profile/372455', headers={
+    'User-Agent': 'Mozilla/5.0'
+  })
+  res = urlopen(req).read()
+  res = ''.join(map(chr, res))
+  return render_template('pages/index.html', response=res)
 
 # Server:
 if __name__ == '__main__':
-  app.run(debug=True)
+  app.run(
+    debug=True,
+    port=5000
+  )
 
 # Create database (CLI):
 # -> python3
