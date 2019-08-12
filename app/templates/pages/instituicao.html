@@ -4,7 +4,7 @@
     <div class="col-2"></div>
     <div class="col-8">
       <div class="bg-info rounded p-3 m-0 mb-3 shadow text-center">
-        <h3 class="m-0 text-light">{{ turma }}</h3>
+        <h3 class="m-0 text-light">{{ instituicao }}</h3>
       </div>
       <div class="jumbotron py-4 shadow">
         <!-- Listagem alunos por turma: -->
@@ -40,7 +40,7 @@
                   </div>
                   <div class="col-6">
                     <h5>Since 
-                      <span class="badge badge-primary">{{ aluno.since|datetime }}</span>
+                      <span class="badge badge-primary">{{ aluno.since }}</span>
                     </h5>
                     <h5>Submissions 
                       <span class="badge badge-primary">{{ aluno.submissions }}</span>

@@ -141,11 +141,32 @@ aluno_turmas_schema = AlunoTurmaSchema(many=True, strict=True)
 
 # Routes:
 # Index page:
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/', methods=['GET'])
 def index():  
   turmas = Turma.query.all()
-  result = turmas_schema.dump(turmas)
-  return render_template('pages/index.html', turmas=result.data)
+  turmas = turmas_schema.dump(turmas)
+  instituicoes = Instituicao.query.all()
+  instituicoes = instituicoes_schema.dump(instituicoes)
+  alunos = Aluno.query.all()
+  totais = []
+  for instituicao in instituicoes:
+    for inst in instituicao:
+      id = inst['id']
+      points = db.engine.execute(f'SELECT points FROM aluno WHERE instituicao_id = {id}')
+      points =  [
+        {column: value for column, value in rowproxy.items()} for rowproxy in points
+      ]
+      total = 0
+      for point in points:
+        total += point['points']
+      total = total / len(points)
+      totais.append(round(total, 2))
+  flash(f'Turma cadastrada com sucesso {totais}', 'danger')
+  return render_template(
+    'pages/index.html', 
+    turmas=turmas.data,
+    instituicoes=instituicoes.data
+  )
 
 # Cadastro turma:
 @app.route('/cadastro-turma', methods=['POST'])
@@ -270,7 +291,26 @@ def listarAlunosPorTurma():
   alunos =  [
     {column: value for column, value in rowproxy.items()} for rowproxy in alunos
   ]
-  return render_template('pages/turma.html', alunos=alunos, turma=name)
+  return render_template(
+    'pages/turma.html', 
+    alunos=alunos, 
+    turma=name
+  )
+
+# Listagem alunos por instituicao:
+@app.route('/instituicoes', methods=['GET'])
+def listarAlunosPorInstituicao():  
+  id = request.args.get('id')
+  name = request.args.get('name')
+  alunos = db.engine.execute(f'SELECT * FROM aluno WHERE instituicao_id = {id}')
+  alunos =  [
+    {column: value for column, value in rowproxy.items()} for rowproxy in alunos
+  ]
+  return render_template(
+    'pages/instituicao.html', 
+    alunos=alunos, 
+    instituicao=name
+  )
 
 # Server:
 if __name__ == '__main__':
