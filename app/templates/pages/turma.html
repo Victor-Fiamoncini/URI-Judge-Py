@@ -1,1 +1,67 @@
-TURMA
+{% extends 'layouts/index.html' %}
+{% block body %}
+  <div class="row m-0">
+    <div class="col-2"></div>
+    <div class="col-8">
+      <div class="bg-info rounded p-3 m-0 mb-3 shadow text-center">
+        <h3 class="m-0 text-light">{{ turma }}</h3>
+      </div>
+      <div class="jumbotron py-4 shadow">
+        <!-- Listagem alunos por turma: -->
+        {% if alunos|length > 0 %}
+          {% for aluno in alunos %}
+            <div class="card text-white bg-info my-2">
+              <div class="card-header d-flex justify-content-between">
+                <h4 class="card-title m-0">
+                  <strong>{{ aluno.name }}</strong>
+                </h4>
+                <h4 class="card-title m-0">
+                  <strong>Place</strong> 
+                  <span class="badge badge-primary">
+                    {{ aluno.place }}
+                  </span>
+                </h4>
+              </div>
+              <div class="card-body">
+                <h4 class="card-title">
+                  <strong>Informações</strong>
+                </h4>
+                <div class="row">
+                  <div class="col-6">
+                    <h5>Points 
+                      <span class="badge badge-primary">{{ aluno.points }}</span>
+                    </h5>
+                    <h5>Solved 
+                      <span class="badge badge-primary">{{ aluno.solved }}</span>
+                    </h5>
+                    <h5>Tried 
+                      <span class="badge badge-primary">{{ aluno.tried }}</span>
+                    </h5>
+                  </div>
+                  <div class="col-6">
+                    <h5>Since 
+                      <span class="badge badge-primary">{{ aluno.since|datetime }}</span>
+                    </h5>
+                    <h5>Submissions 
+                      <span class="badge badge-primary">{{ aluno.submissions }}</span>
+                    </h5>
+                  </div>
+                </div>
+              </div>
+            </div>    
+          {% endfor %}
+        {% else: %}
+          <div class="card text-white bg-info my-2">
+            <div class="card-body">
+              <h4 class="card-title m-0 text-center">
+                Não existem alunos cadastrados nessa turma
+              </h4>
+            </div> 
+          </div>
+        {% endif %}
+      </div>
+    </div>
+    <div class="col-2"></div>
+    </div>
+  </div>
+{% endblock %}

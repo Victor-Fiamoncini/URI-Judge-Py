@@ -1,9 +1,9 @@
 # Imports:
-from flask import Flask, request, jsonify, render_template, flash
+from flask import Flask, request, jsonify, render_template, flash, redirect
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from urllib.request import Request, urlopen
-import os
+import datetime, os, re, json
 
 # App:
 app = Flask(__name__)
@@ -34,8 +34,16 @@ class TurmaSchema(ma.Schema):
 
 # Instituicao Class/Model:
 class Instituicao(db.Model):
-  id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+  id = db.Column(
+    db.Integer, 
+    primary_key=True,
+    autoincrement=True,
+  )
   name = db.Column(db.String(255))
+  instituicao_id = db.relationship(
+    'Aluno',
+    backref='instituicao'
+  ) 
 
   def __init__(self, name):
     self.name = name
@@ -50,7 +58,11 @@ class InstituicaoSchema(ma.Schema):
 
 # Aluno Class/Model:
 class Aluno(db.Model):
-  id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+  id = db.Column(
+    db.Integer, 
+    primary_key=True, 
+    autoincrement=True
+  )
   name = db.Column(db.String(255))
   since = db.Column(db.Date)
   solved = db.Column(db.Float)
@@ -60,7 +72,7 @@ class Aluno(db.Model):
   place = db.Column(db.Float)
   instituicao_id = db.Column(
     db.Integer, 
-    db.ForeignKey('instituicao.id'), nullable=False
+    db.ForeignKey('instituicao.id')
   )
   
   def __init__(self, name, since, solved, tried, submissions, points, place, instituicao_id):
@@ -131,13 +143,9 @@ aluno_turmas_schema = AlunoTurmaSchema(many=True, strict=True)
 # Index page:
 @app.route('/', methods=['GET', 'POST'])
 def index():  
-  req = Request('https://www.urionlinejudge.com.br/judge/en/profile/372455', headers={
-    'User-Agent': 'Mozilla/5.0'
-  })
-  res = urlopen(req).read()
-  res = ''.join(map(chr, res))
-  res = res.find('pb-information')
-  return render_template('pages/index.html', response=res)
+  turmas = Turma.query.all()
+  result = turmas_schema.dump(turmas)
+  return render_template('pages/index.html', turmas=result.data)
 
 # Cadastro turma:
 @app.route('/cadastro-turma', methods=['POST'])
@@ -147,21 +155,122 @@ def cadastroTurma():
   db.session.add(new_turma)
   db.session.commit()
   flash('Turma cadastrada com sucesso', 'success')
-  return render_template('pages/index.html')
+  return redirect('/')
 
 # Cadastro Aluno:
 @app.route('/cadastro-aluno', methods=['POST'])
 def cadastroAluno(): 
   id = request.form['id-aluno']
-  
-  
-  new_aluno = Aluno(name)
-  db.session.add(new_aluno)
-  db.session.commit()
-  flash('Aluno cadastrada com sucesso', 'success')
-  return render_template('pages/index.html')
+  turma_id = request.form['turma-aluno']
+  # Request para URI Judge:
+  req = Request(f'https://www.urionlinejudge.com.br/judge/en/profile/{id}', headers={
+    'User-Agent': 'Mozilla/5.0'
+  })
+  res = urlopen(req).read()
+  res = ''.join(map(chr, res))
+  res = res.split(' ')
+  # Name:
+  index = res.index('class="pb-username">\n')
+  index = res[index + 30]
+  name = index.split('>')[1]
+  name = name.split('<')[0]  
+  # Place:
+  index = res.index('<span>Place:</span>\n')
+  place = res[index + 16]
+  if place == 'Unknown': 
+    place = 0
+  else:
+    place = re.sub('[^A-Za-z0-9]+', '', place)
+    place = re.sub('\D', '', place)
+  # University:
+  index = res.index('<span>University:</span>\n')
+  index = res[index + 19]
+  university = index.split('>')[1]
+  university = university.split('<')[0]
+  # Since:
+  index = res.index('<span>Since:</span>\n')
+  since = res[index + 16]
+  since = datetime.datetime.strptime(since, '%m/%d/%y')
+  # Points:
+  index = res.index('<span>Points:</span>\n')
+  points = res[index + 16]
+  # Solved:
+  index = res.index('<span>Solved:</span>\n')
+  solved = res[index + 16]
+  # Tried:
+  index = res.index('<span>Tried:</span>\n')
+  tried = res[index + 16]
+  # Submissions:
+  index = res.index('<span>Submissions:</span>\n')
+  submissions = res[index + 16]
+  # Cadastro instituicao:
+  instituicoes = Instituicao.query.all()
+  instituicoes = instituicoes_schema.dump(instituicoes)
+  if re.search(f'"name": "{university}"', json.dumps(instituicoes), re.M):    
+    university_id = db.engine.execute(f'SELECT id FROM instituicao WHERE name = "{university}"')
+    university_id = [
+      {column: value for column, value in rowproxy.items()} for rowproxy in university_id
+    ]
+    university_id = university_id[0]['id']
+    new_aluno = Aluno(
+      name,
+      since,
+      solved,
+      tried,
+      submissions,
+      points,
+      place,
+      university_id
+    )
+    db.session.add(new_aluno)
+    db.session.commit()
+    db.session.refresh(new_aluno)
+    # Insert aluno_turma:
+    new_aluno_turma = AlunoTurma(new_aluno.id, turma_id)
+    db.session.add(new_aluno_turma)
+    db.session.commit()
+    flash('Aluno cadastrado com sucesso', 'success')
+    return redirect('/')
+  else:
+    new_instituicao = Instituicao(university)
+    db.session.add(new_instituicao)
+    db.session.commit()
+    db.session.refresh(new_instituicao)
+    new_aluno = Aluno(
+      name,
+      since,
+      solved,
+      tried,
+      submissions,
+      points,
+      place,
+      new_instituicao.id
+    )
+    db.session.add(new_aluno)
+    db.session.commit()
+    db.session.refresh(new_aluno)
+    # Insert aluno_turma:
+    new_aluno_turma = AlunoTurma(new_aluno.id, turma_id)
+    db.session.add(new_aluno_turma)
+    db.session.commit()
+    flash('Aluno cadastrado com sucesso', 'success')
+    return redirect('/')
+  flash('Erro ao cadastrar', 'secondary')
+  return redirect('/')
 
-
+# Listagem alunos por turma:
+@app.route('/turmas', methods=['GET'])
+def listarAlunosPorTurma():  
+  id = request.args.get('id')
+  name = request.args.get('name')
+  alunos = db.engine.execute(f'''
+    SELECT * FROM aluno LEFT JOIN aluno_turma on aluno_turma.aluno_id = aluno.id 
+    WHERE aluno_turma.turma_id = {id}
+  ''')
+  alunos =  [
+    {column: value for column, value in rowproxy.items()} for rowproxy in alunos
+  ]
+  return render_template('pages/turma.html', alunos=alunos, turma=name)
 
 # Server:
 if __name__ == '__main__':

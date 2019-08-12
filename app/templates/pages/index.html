@@ -7,12 +7,18 @@
       {% include 'includes/_messages.html' %}
       <!-- Cadastro Aluno: -->
       <div class="jumbotron py-4 shadow">
-        <form class="form" method="POST">
+        <form 
+          class="form" 
+          method="POST"
+          action="/cadastro-aluno"
+        >
           <div class="input-group mb-2">
             <input class="form-control" name="id-aluno" type="text" placeholder="ID" />
             <!-- Listagem turmas: -->
             <select name="turma-aluno" class="form-control">
-              <option selected>Turma</option>
+              {% for turma in turmas %}
+                <option value="{{ turma.id }}">{{ turma.name }}</option>
+              {% endfor %}              
             </select>
           </div>
           <button 
@@ -50,18 +56,20 @@
       </div>
       <div class="jumbotron py-4 shadow">
         <!-- Listagem turmas: -->
-        <div class="my-2 card-body rounded text-light bg-info">
-          <form 
-            class="d-flex justify-content-between align-items-center" 
-            action="./turma.php" 
-            method="get"
-          >
-            <input type="hidden" name="turma" value="<?= $turma['id'] ?>">
-            <input type="hidden" name="nomeTurma" value="<?= $turma['nome'] ?>">
-            <strong>TURMA</strong>
-            <button class="btn btn-primary" type="submit">Ver Alunos</button>
-          </form>
-        </div>
+        {% for turma in turmas %}
+          <div class="my-2 card-body rounded text-light bg-info">
+            <form 
+              class="d-flex justify-content-between align-items-center" 
+              action="/turmas" 
+              method="get"
+            >
+              <input type="hidden" name="id" value="{{ turma.id }}">
+              <input type="hidden" name="name" value="{{ turma.name }}">
+              <strong>{{ turma.name }}</strong>
+              <button class="btn btn-primary" type="submit">Ver Alunos</button>
+            </form>
+          </div>
+        {% endfor %}  
       </div>
       <div class="jumbotron py-4 shadow">
         <!-- Listagem instituições: -->

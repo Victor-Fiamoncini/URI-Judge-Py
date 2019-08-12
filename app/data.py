@@ -5,7 +5,7 @@ from urllib.request import Request, urlopen
 # 372455
 # 4044
 
-req = Request('https://www.urionlinejudge.com.br/judge/en/profile/372455', headers={
+req = Request('https://www.urionlinejudge.com.br/judge/en/profile/', headers={
   'User-Agent': 'Mozilla/5.0'
 })
 res = urlopen(req).read()
