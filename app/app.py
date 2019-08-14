@@ -3,7 +3,9 @@ from flask import Flask, request, jsonify, render_template, flash, redirect
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from urllib.request import Request, urlopen
-import datetime, os, re, json
+from bar import Bar
+from pie import Pie
+import datetime, os, re, json, random, string
 
 # App:
 app = Flask(__name__)
@@ -149,9 +151,11 @@ def index():
   instituicoes = instituicoes_schema.dump(instituicoes)
   alunos = Aluno.query.all()
   totais = []
+  tick_label = []
   for instituicao in instituicoes:
     for inst in instituicao:
       id = inst['id']
+      tick_label.append(inst['name'])
       points = db.engine.execute(f'SELECT points FROM aluno WHERE instituicao_id = {id}')
       points =  [
         {column: value for column, value in rowproxy.items()} for rowproxy in points
@@ -160,12 +164,24 @@ def index():
       for point in points:
         total += point['points']
       total = total / len(points)
-      totais.append(round(total, 2))
-  flash(f'Turma cadastrada com sucesso {totais}', 'danger')
+      totais.append(total)
+  color = ['red', 'green']
+  width = 0.8
+  graph = Bar(
+    tick_label, 
+    totais, 
+    width, 
+    color, 
+    'nome', 
+    'média', 
+    '', 
+    'bar'
+  )
   return render_template(
     'pages/index.html', 
     turmas=turmas.data,
-    instituicoes=instituicoes.data
+    instituicoes=instituicoes.data,
+    grafico=graph.plotGraph()
   )
 
 # Cadastro turma:
@@ -184,100 +200,105 @@ def cadastroAluno():
   id = request.form['id-aluno']
   turma_id = request.form['turma-aluno']
   # Request para URI Judge:
-  req = Request(f'https://www.urionlinejudge.com.br/judge/en/profile/{id}', headers={
-    'User-Agent': 'Mozilla/5.0'
-  })
-  res = urlopen(req).read()
-  res = ''.join(map(chr, res))
-  res = res.split(' ')
-  # Name:
-  index = res.index('class="pb-username">\n')
-  index = res[index + 30]
-  name = index.split('>')[1]
-  name = name.split('<')[0]  
-  # Place:
-  index = res.index('<span>Place:</span>\n')
-  place = res[index + 16]
-  if place == 'Unknown': 
-    place = 0
-  else:
-    place = re.sub('[^A-Za-z0-9]+', '', place)
-    place = re.sub('\D', '', place)
-  # University:
-  index = res.index('<span>University:</span>\n')
-  index = res[index + 19]
-  university = index.split('>')[1]
-  university = university.split('<')[0]
-  # Since:
-  index = res.index('<span>Since:</span>\n')
-  since = res[index + 16]
-  since = datetime.datetime.strptime(since, '%m/%d/%y')
-  # Points:
-  index = res.index('<span>Points:</span>\n')
-  points = res[index + 16]
-  # Solved:
-  index = res.index('<span>Solved:</span>\n')
-  solved = res[index + 16]
-  # Tried:
-  index = res.index('<span>Tried:</span>\n')
-  tried = res[index + 16]
-  # Submissions:
-  index = res.index('<span>Submissions:</span>\n')
-  submissions = res[index + 16]
-  # Cadastro instituicao:
-  instituicoes = Instituicao.query.all()
-  instituicoes = instituicoes_schema.dump(instituicoes)
-  if re.search(f'"name": "{university}"', json.dumps(instituicoes), re.M):    
-    university_id = db.engine.execute(f'SELECT id FROM instituicao WHERE name = "{university}"')
-    university_id = [
-      {column: value for column, value in rowproxy.items()} for rowproxy in university_id
-    ]
-    university_id = university_id[0]['id']
-    new_aluno = Aluno(
-      name,
-      since,
-      solved,
-      tried,
-      submissions,
-      points,
-      place,
-      university_id
-    )
-    db.session.add(new_aluno)
-    db.session.commit()
-    db.session.refresh(new_aluno)
-    # Insert aluno_turma:
-    new_aluno_turma = AlunoTurma(new_aluno.id, turma_id)
-    db.session.add(new_aluno_turma)
-    db.session.commit()
-    flash('Aluno cadastrado com sucesso', 'success')
+  try:
+    req = Request(f'https://www.urionlinejudge.com.br/judge/en/profile/{id}', headers={
+      'User-Agent': 'Mozilla/5.0'
+    })
+    res = urlopen(req).read()
+  except Exception:
+    flash('Erro ao requerir os dados do aluno', 'secondary')
     return redirect('/')
   else:
-    new_instituicao = Instituicao(university)
-    db.session.add(new_instituicao)
-    db.session.commit()
-    db.session.refresh(new_instituicao)
-    new_aluno = Aluno(
-      name,
-      since,
-      solved,
-      tried,
-      submissions,
-      points,
-      place,
-      new_instituicao.id
-    )
-    db.session.add(new_aluno)
-    db.session.commit()
-    db.session.refresh(new_aluno)
-    # Insert aluno_turma:
-    new_aluno_turma = AlunoTurma(new_aluno.id, turma_id)
-    db.session.add(new_aluno_turma)
-    db.session.commit()
-    flash('Aluno cadastrado com sucesso', 'success')
+    res = ''.join(map(chr, res))
+    res = res.split(' ')
+    # Name:
+    index = res.index('class="pb-username">\n')
+    index = res[index + 30]
+    name = index.split('>')[1]
+    name = name.split('<')[0]  
+    # Place:
+    index = res.index('<span>Place:</span>\n')
+    place = res[index + 16]
+    if place == 'Unknown': 
+      place = 0
+    else:
+      place = re.sub('[^A-Za-z0-9]+', '', place)
+      place = re.sub('\D', '', place)
+    # University:
+    index = res.index('<span>University:</span>\n')
+    index = res[index + 19]
+    university = index.split('>')[1]
+    university = university.split('<')[0]
+    # Since:
+    index = res.index('<span>Since:</span>\n')
+    since = res[index + 16]
+    since = datetime.datetime.strptime(since, '%m/%d/%y')
+    # Points:
+    index = res.index('<span>Points:</span>\n')
+    points = res[index + 16]
+    # Solved:
+    index = res.index('<span>Solved:</span>\n')
+    solved = res[index + 16]
+    # Tried:
+    index = res.index('<span>Tried:</span>\n')
+    tried = res[index + 16]
+    # Submissions:
+    index = res.index('<span>Submissions:</span>\n')
+    submissions = res[index + 16]
+    # Cadastro instituicao:
+    instituicoes = Instituicao.query.all()
+    instituicoes = instituicoes_schema.dump(instituicoes)
+    if re.search(f'"name": "{university}"', json.dumps(instituicoes), re.M):    
+      university_id = db.engine.execute(f'SELECT id FROM instituicao WHERE name = "{university}"')
+      university_id = [
+        {column: value for column, value in rowproxy.items()} for rowproxy in university_id
+      ]
+      university_id = university_id[0]['id']
+      new_aluno = Aluno(
+        name,
+        since,
+        solved,
+        tried,
+        submissions,
+        points,
+        place,
+        university_id
+      )
+      db.session.add(new_aluno)
+      db.session.commit()
+      db.session.refresh(new_aluno)
+      # Insert aluno_turma:
+      new_aluno_turma = AlunoTurma(new_aluno.id, turma_id)
+      db.session.add(new_aluno_turma)
+      db.session.commit()
+      flash('Aluno cadastrado com sucesso', 'success')
+      return redirect('/')
+    else:
+      new_instituicao = Instituicao(university)
+      db.session.add(new_instituicao)
+      db.session.commit()
+      db.session.refresh(new_instituicao)
+      new_aluno = Aluno(
+        name,
+        since,
+        solved,
+        tried,
+        submissions,
+        points,
+        place,
+        new_instituicao.id
+      )
+      db.session.add(new_aluno)
+      db.session.commit()
+      db.session.refresh(new_aluno)
+      # Insert aluno_turma:
+      new_aluno_turma = AlunoTurma(new_aluno.id, turma_id)
+      db.session.add(new_aluno_turma)
+      db.session.commit()
+      flash('Aluno cadastrado com sucesso', 'success')
+      return redirect('/')
+    flash('Erro ao cadastrar', 'secondary')
     return redirect('/')
-  flash('Erro ao cadastrar', 'secondary')
-  return redirect('/')
 
 # Listagem alunos por turma:
 @app.route('/turmas', methods=['GET'])
@@ -291,6 +312,22 @@ def listarAlunosPorTurma():
   alunos =  [
     {column: value for column, value in rowproxy.items()} for rowproxy in alunos
   ]
+  tick_label = []
+  points = []
+  explode = []
+  for aluno in alunos:
+    if aluno['points'] > 0:
+      points.append(aluno['points'])
+      tick_label.append(aluno['name'])
+      explode.append(0)
+  get_colors = lambda n: list(map(lambda i: '#' + '%06x' % random.randint(0, 0xFFFFFF), range(n)))
+  colors = get_colors(len(alunos))  
+  startangle = 90
+  shadow = True
+  radius = 1.2
+  autopct = '%1.1f%%'
+  graph = Pie(points, tick_label, colors, startangle, shadow, explode, radius, autopct, 'pie')
+  graph.plot()
   return render_template(
     'pages/turma.html', 
     alunos=alunos, 

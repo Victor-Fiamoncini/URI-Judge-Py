@@ -24,7 +24,7 @@
           <button 
             type="submit" 
             name="cadastro-aluno" 
-            class="btn btn-primary btn-block"
+            class="btn btn-success btn-block"
           >
             Cadastrar Aluno
           </button>
@@ -47,7 +47,7 @@
                   placeholder="Nome..." 
                 />
               </div>
-              <button type="submit" class="btn btn-primary btn-block">
+              <button type="submit" class="btn btn-success btn-block">
                 Cadastrar Turma
               </button>
             </form>
@@ -66,7 +66,7 @@
               <input type="hidden" name="id" value="{{ turma.id }}">
               <input type="hidden" name="name" value="{{ turma.name }}">
               <strong>{{ turma.name }}</strong>
-              <button class="btn btn-primary" type="submit">Ver Alunos</button>
+              <button class="btn btn-success" type="submit">Ver Alunos</button>
             </form>
           </div>
         {% endfor %}  
@@ -83,18 +83,22 @@
               <input type="hidden" name="id" value="{{ instituicao.id }}">
               <input type="hidden" name="name" value="{{ instituicao.name }}">
               <strong>{{ instituicao.name }}</strong>
-              <button class="btn btn-primary" type="submit">Ver Alunos</button>
+              <button class="btn btn-success" type="submit">Ver Alunos</button>
             </form>
           </div>
         {% endfor %}
       </div>
       <div class="jumbotron py-4 shadow">
         <!-- Plotagem gráfico -->
-        <h4 class="text-primary text-center mb-3">
+        <h4 class="text-success text-center mb-3">
           <strong>Média de Pontuação das Instituições</strong>
         </h4>
         <div class="row my-2 card-body rounded text-light bg-info">
-          <img src="" alt="Gráfico">
+          <img
+            class="rounded w-100" 
+            src="{{ url_for('static', filename='img/bar.svg') }}" 
+            alt="Gráfico"
+          >
         </div>
       </div>
     </div>
