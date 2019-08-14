@@ -1,4 +1,107 @@
 {% extends 'layouts/index.html' %}
 {% block body %}
-  HOME
+  <div class="row m-0">
+    <div class="col-2"></div>
+    <div class="col-8">
+      <!-- Messages: -->
+      {% include 'includes/_messages.html' %}
+      <!-- Cadastro Aluno: -->
+      <div class="jumbotron py-4 shadow">
+        <form 
+          class="form" 
+          method="POST"
+          action="/cadastro-aluno"
+        >
+          <div class="input-group mb-2">
+            <input class="form-control" name="id-aluno" type="text" placeholder="ID" />
+            <!-- Listagem turmas: -->
+            <select name="turma-aluno" class="form-control">
+              {% for turma in turmas %}
+                <option value="{{ turma.id }}">{{ turma.name }}</option>
+              {% endfor %}              
+            </select>
+          </div>
+          <button 
+            type="submit" 
+            name="cadastro-aluno" 
+            class="btn btn-success btn-block"
+          >
+            Cadastrar Aluno
+          </button>
+        </form>
+      </div>
+      <div class="row">
+        <!-- Cadastro Turma: -->
+        <div class="col-12">
+          <div class="jumbotron py-4 shadow">
+            <form 
+              class="form" 
+              method="POST"
+              action="/cadastro-turma"
+            >
+              <div class="input-group mb-2">
+                <input 
+                  class="form-control" 
+                  name="name-turma" 
+                  type="text" 
+                  placeholder="Nome..." 
+                />
+              </div>
+              <button type="submit" class="btn btn-success btn-block">
+                Cadastrar Turma
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+      <div class="jumbotron py-4 shadow">
+        <!-- Listagem turmas: -->
+        {% for turma in turmas %}
+          <div class="my-2 card-body rounded text-light bg-info">
+            <form 
+              class="d-flex justify-content-between align-items-center" 
+              action="/turmas" 
+              method="GET"
+            >
+              <input type="hidden" name="id" value="{{ turma.id }}">
+              <input type="hidden" name="name" value="{{ turma.name }}">
+              <strong>{{ turma.name }}</strong>
+              <button class="btn btn-success" type="submit">Ver Alunos</button>
+            </form>
+          </div>
+        {% endfor %}  
+      </div>
+      <div class="jumbotron py-4 shadow">
+        <!-- Listagem instituições: -->
+        {% for instituicao in instituicoes %}
+          <div class="my-2 card-body rounded text-light bg-info">
+            <form 
+              class="d-flex justify-content-between align-items-center" 
+              action="/instituicoes" 
+              method="GET"
+            >
+              <input type="hidden" name="id" value="{{ instituicao.id }}">
+              <input type="hidden" name="name" value="{{ instituicao.name }}">
+              <strong>{{ instituicao.name }}</strong>
+              <button class="btn btn-success" type="submit">Ver Alunos</button>
+            </form>
+          </div>
+        {% endfor %}
+      </div>
+      <div class="jumbotron py-4 shadow">
+        <!-- Plotagem gráfico -->
+        <h4 class="text-success text-center mb-3">
+          <strong>Média de Pontuação das Instituições</strong>
+        </h4>
+        <div class="row my-2 card-body rounded text-light bg-info">
+          <img
+            class="rounded w-100" 
+            src="{{ url_for('static', filename='img/bar.svg') }}" 
+            alt="Gráfico"
+          >
+        </div>
+      </div>
+    </div>
+    <div class="col-2"></div>
+  </div>
 {% endblock %}
