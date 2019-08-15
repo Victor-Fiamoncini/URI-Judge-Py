@@ -13,7 +13,7 @@ class Pie:
     self.autopct = autopct
     self.filename = filename
 
-  def plot(self):
+  def plot(self, id):
     fig = plt.figure()
     plt.pie(
       self.slices, 
@@ -25,4 +25,4 @@ class Pie:
       radius=self.radius, 
       autopct=self.autopct
     )
-    fig.savefig('static/img/%s.svg' % (self.filename))
+    fig.savefig(f'static/img/%s-{id}.svg' % (self.filename))

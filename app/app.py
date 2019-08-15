@@ -5,6 +5,7 @@ from flask_marshmallow import Marshmallow
 from urllib.request import Request, urlopen
 from bar import Bar
 from pie import Pie
+from charts import Chart
 import datetime, os, re, json, random, string
 
 # App:
@@ -142,6 +143,12 @@ aluno_turma_schema = AlunoTurmaSchema(strict=True)
 aluno_turmas_schema = AlunoTurmaSchema(many=True, strict=True)
 
 # Routes:
+@app.after_request
+def add_header(response):
+  response.headers['X-UA-Compatible'] = 'IE=Edge,chrome=1'
+  response.headers['Cache-Control'] = 'public, max-age=0'
+  return response
+
 # Index page:
 @app.route('/', methods=['GET'])
 def index():  
@@ -154,17 +161,18 @@ def index():
   tick_label = []
   for instituicao in instituicoes:
     for inst in instituicao:
-      id = inst['id']
-      tick_label.append(inst['name'])
-      points = db.engine.execute(f'SELECT points FROM aluno WHERE instituicao_id = {id}')
-      points =  [
-        {column: value for column, value in rowproxy.items()} for rowproxy in points
-      ]
-      total = 0
-      for point in points:
-        total += point['points']
-      total = total / len(points)
-      totais.append(total)
+      if len(inst['name']) > 0:
+        id = inst['id']
+        tick_label.append(inst['name'])
+        points = db.engine.execute(f'SELECT points FROM aluno WHERE instituicao_id = {id}')
+        points =  [
+          {column: value for column, value in rowproxy.items()} for rowproxy in points
+        ]
+        total = 0
+        for point in points:
+          total += point['points']
+        total = total / len(points)
+        totais.append(total)
   color = ['red', 'green']
   width = 0.8
   graph = Bar(
@@ -327,11 +335,12 @@ def listarAlunosPorTurma():
   radius = 1.2
   autopct = '%1.1f%%'
   graph = Pie(points, tick_label, colors, startangle, shadow, explode, radius, autopct, 'pie')
-  graph.plot()
+  graph.plot(id)  
   return render_template(
     'pages/turma.html', 
     alunos=alunos, 
-    turma=name
+    turma=name,
+    id=str(id),
   )
 
 # Listagem alunos por instituicao:
